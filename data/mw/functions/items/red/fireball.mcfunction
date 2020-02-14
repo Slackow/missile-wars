@@ -1,0 +1,1 @@
+give @s minecraft:blaze_spawn_egg{display:{Name:"{\"text\":\"Spawn Fireball\",\"italic\":false,\"color\":\"red\"}"},EntityTag:{Particle:"block air",id:"minecraft:area_effect_cloud",Tags:["tick","fireball"]}}

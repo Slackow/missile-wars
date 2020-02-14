@@ -1,0 +1,46 @@
+
+/execute if score state global matches 1 run $function  {
+
+  var items = [
+    ['arrows', 'Arrows'],
+    ['fireballs', 'Fireballs'],
+    ['guardians', 'Guardians'],
+    ['juggernauts', 'Juggernauts'],
+    ['lightnings', 'Lightnings'],
+    ['shield_busters', 'Shield Busters'],
+    ['snowballs', 'Barriers'],
+    ['tomahawks', 'Tomahawks']
+  ];
+
+  for possible_items in items  {
+    var tag, display = possible_items;
+    /summon armor_stand 0 1 0 {NoGravity:1b, Invisible:1b, Tags:["random_gen", "$tag"], CustomName:"\"$display\""}
+  }
+  /kill @e[x=0,y=1,z=0,distance=..2,limit=${items.length()-1},tag=random_gen,sort=random]
+
+  function give_if_chosen(tag, spawn_egg, item_function)  {
+    /execute if entity @s[tag=$tag] as @a[team=Green,nbt=!{Inventory:[{id:"minecraft:$spawn_egg"}]}] run function mw:items/${item_function.replace('[team]', 'green')}
+    /execute if entity @s[tag=$tag] as @a[team=Red,nbt=!{Inventory:[{id:"minecraft:$spawn_egg"}]}] run function mw:items/${item_function.replace('[team]', 'red')}
+  }
+
+  /execute as @e[x=0,y=1,z=0,distance=..2,tag=random_gen,limit=1] run $function  {
+
+    give_if_chosen('guardians', 'guardian_spawn_egg', '[team]/guardian');
+    give_if_chosen('juggernauts', 'ghast_spawn_egg', '[team]/juggernaut');
+    give_if_chosen('lightnings', 'ocelot_spawn_egg', '[team]/lightning');
+    give_if_chosen('shield_busters', 'witch_spawn_egg', '[team]/shield_buster');
+    give_if_chosen('tomahawks', 'creeper_spawn_egg', '[team]/tomahawk');
+    give_if_chosen('fireballs', 'blaze_spawn_egg', '[team]/fireball');
+    give_if_chosen('snowballs', 'snowball', '[team]/snowball');
+    give_if_chosen('arrows', 'arrow', 'arrow');
+
+    /title @a actionbar [{"nbt":"CustomName","entity":"@s","interpret":true,"color":"gold","bold":true}]
+
+    /kill @s
+  }
+
+  /schedule $function 'items/give_random_item_notice 12s' {
+    /title @a actionbar ["",{"text":"Items in 3 seconds","color":"blue"}]
+  }
+  /schedule function mw:items/give_random_item 15s
+}

@@ -1,0 +1,304 @@
+tick this;
+#Summoning stuff
+var missiles = [
+  {
+    name: 'red_lightning',
+    xyz: [0, -5, 5], pos_xyz: [-1, 0, 0],
+    red_xyz: [0, -5, 6]
+  },
+  {
+    name: 'green_lightning',
+    xyz: [0, -5, -5], pos_xyz: [-1, 0, -8],
+    red_xyz: [0, -5, -6]
+  },
+
+  {
+    name: 'red_shield_buster',
+    xyz: [0, -5, 4], pos_xyz: [-1, 0, 0],
+    red_xyz: [0, -5, 5]
+  },
+  {
+    name: 'green_shield_buster',
+    xyz: [0, -5, -4], pos_xyz: [-1, 0, -14],
+    red_xyz: [0, -5, -5]
+  },
+
+  {
+    name: 'red_juggernaut',
+    xyz: [0, -4, 4], pos_xyz: [-1, -1, 0],
+    red_xyz: [0, -4, 5]
+  },
+  {
+    name: 'green_juggernaut',
+    xyz: [0, -4, -4], pos_xyz: [-1, -1, -10],
+    red_xyz: [0, -4, -5]
+  },
+
+  {
+    name: 'red_tomahawk',
+    xyz: [0, -5, 4], pos_xyz: [0, 0, 0],
+    red_xyz: [0, -5, 5]
+  },
+  {
+    name: 'green_tomahawk',
+    xyz: [0, -5, -4], pos_xyz: [-1, 0, -12],
+    red_xyz: [0, -5, -5]
+  },
+
+  {
+    name: 'red_guardian',
+    xyz: [1, -4, 4], pos_xyz: [-2, -1, 0],
+    red_xyz: [1, -4, 5]
+  },
+  {
+    name: 'green_guardian',
+    xyz: [-1, -4, -4], pos_xyz: [0, -1, -7],
+    red_xyz: [-1, -4, -5]
+  }
+
+];
+
+gen function 'reset' {
+  #clear out
+  /scoreboard players set run global 50
+  /execute positioned -73 10 -100 run $function 'reset_loop' {
+    /fill -73 10 ~ 10 106 ~3 air
+    /scoreboard players remove run global 1
+    /execute if score run global matches 1.. positioned ~ ~ ~4 run function mw:reset_loop
+  }
+
+  #red side
+  /fill -53 76 -51 -1 47 -55 minecraft:red_stained_glass
+  /fill -53 76 -56 -1 47 -60 minecraft:pink_stained_glass
+  /fill -53 76 -61 -1 47 -65 minecraft:white_stained_glass
+
+  /fill -53 76 -65 -1 76 -65 minecraft:obsidian
+  /fill -53 77 -66 -1 77 -66 minecraft:obsidian
+
+  /fill -5 73 -72 -49 51 -72 minecraft:obsidian
+  /fill -6 72 -72 -26 52 -72 air
+  /fill -28 72 -72 -48 52 -72 air
+  /fill -26 72 -72 -28 72 -72 fire replace air
+
+  #green side
+  /fill -53 76 55 -1 47 51 minecraft:green_stained_glass
+  /fill -53 76 60 -1 47 56 minecraft:lime_stained_glass
+  /fill -53 76 65 -1 47 61 minecraft:white_stained_glass
+
+  /fill -53 76 65 -1 76 65 minecraft:obsidian
+  /fill -53 77 66 -1 77 66 minecraft:obsidian
+
+  /fill -49 73 72 -5 51 72 minecraft:obsidian
+  /fill -48 72 72 -28 52 72 air
+  /fill -26 72 72 -6 52 72 air
+  /fill -28 72 72 -26 72 72 fire replace air
+
+}
+
+function heal_player()  {
+  /effect give @s instant_health 1 10 true
+  /effect give @s resistance 1 20 true
+  /effect give @s saturation 100000 1 true
+  /effect give @s night_vision 100000 1 true
+}
+
+/execute as @e[tag=tick] at @s run $function 'tick' {
+
+  for missile in missiles  {
+    var name = missile.name;
+    var x, y, z = missile.xyz;
+    var pos_x, pos_y, pos_z = missile.pos_xyz;
+    var red_x, red_y, red_z = missile.red_xyz;
+    /execute if entity @s[tag=$name] run $function  {
+      /setblock ~$x ~$y ~$z structure_block{mode: "LOAD", posX: $pos_x, posY: $pos_y, posZ: $pos_z, name: "mw:${name.replace('n_', 'n/').replace('ed_','ed/')}"}
+      /setblock ~$red_x ~$red_y ~$red_z redstone_block
+      /kill @s
+    }
+  }
+
+  /execute if entity @s[tag=fireball] run $function  {
+    /summon fireball ~ ~1 ~ {ExplosionPower:1,life:1000,direction:[0.0,0.0,0.0]}
+    /kill @s
+  }
+  /execute if entity @s[type=snowball] run $function  {
+    for team in ['red', 'green']  {
+      /execute if entity @s[tag=$team] if score @s mw_time matches 20.. run $function  {
+        /setblock ~ ~ ~ structure_block{mode: "LOAD", posX: -3, posY: -3, posZ: 0, name: "mw:$team/snowball"}
+        /setblock ~ ~1 ~ redstone_block
+        /kill @s
+      }
+    }
+    /scoreboard players add @s mw_time 1
+  }
+}
+
+#run not during game
+/execute if score state global matches 0 run $function 'state0' {
+
+  /execute as @a run $function '/player' {
+    /scoreboard players enable @s[team=!Red,team=!Green] join_red
+    /scoreboard players enable @s[team=!Red,team=!Green] join_green
+    #join green platform
+    /scoreboard players set @s[x=-118,y=66,z=6.0,dx=0,dy=0,dz=4] join_green 1
+    #join red platform
+    /scoreboard players set @s[x=-118,y=66,z=-9.0,dx=0,dy=0,dz=4] join_red 1
+
+
+    /effect give @s instant_health 1 6 true
+    /effect give @s saturation 1 20 true
+
+    /execute as @s[scores={join_red=1..}] run $function  {
+      /team join Red @s
+      /scoreboard players enable @s leave
+      /scoreboard players set @s join_red 0
+      /tp @s -80 78 -20 -90 0
+      /tellraw @a ["",{"selector":"@s"}," joined ",{"text":"Red","color":"red"}," Team"]
+    }
+    /execute as @s[scores={join_green=1..}] run $function  {
+      /team join Green @s
+      /scoreboard players enable @s leave
+      /scoreboard players set @s join_green 0
+      /tp @s -80 78 20 -90 0
+      /tellraw @a ["",{"selector":"@s"}," joined ",{"text":"Green","color":"green"}," Team"]
+    }
+
+    /execute as @s[scores={leave=1..}] run $function  {
+      /tellraw @a [{"selector":"@s"},{"text":" has left ","color":"white"},"their",{"text":" Team","color":"white"}]
+      /team leave @s
+      /tp @s -100 70 0 90 0
+      /scoreboard players operation timer global > 400 global
+      /scoreboard players set @s leave 0
+    }
+  }
+  /execute store result score red_players global run team list Red
+  /execute store result score green_players global run team list Green
+  /execute if score red_players global matches 1.. if score green_players global matches 1.. run $function  {
+    /execute if score timer global matches 1.. run scoreboard players remove timer global 1
+    /execute if score timer global matches ..0 run $function  {
+      /scoreboard players set state global 1
+      /function mw:reset
+      /tag @a remove not_playing
+      /tag @a[team=!Green,team=!Red] add not_playing
+      /execute as @a[tag=!not_playing] run $function  {
+        /clear @s
+        /execute as @s[team=Red] run $function  {
+          /replaceitem entity @s armor.chest minecraft:leather_chestplate{display:{color:16711680},HideFlags:5,Unbreakable:1b,Enchantments:[{id:"minecraft:binding_curse",lvl:1}]}
+          /replaceitem entity @s armor.legs minecraft:leather_leggings{display:{color:16711680},HideFlags:5,Unbreakable:1b,Enchantments:[{id:"minecraft:binding_curse",lvl:1}]}
+          /replaceitem entity @s armor.feet minecraft:leather_boots{display:{color:16711680},HideFlags:5,Unbreakable:1b,Enchantments:[{id:"minecraft:binding_curse",lvl:1}]}
+          heal_player();
+          /tp @s -27 77 -65 0 0
+          /spawnpoint @s -27 77 -65
+        }
+
+        /execute as @s[team=Green] run $function  {
+          /replaceitem entity @s armor.chest minecraft:leather_chestplate{display:{color:65280},HideFlags:5,Unbreakable:1b,Enchantments:[{id:"minecraft:binding_curse",lvl:1}]}
+          /replaceitem entity @s armor.legs minecraft:leather_leggings{display:{color:65280},HideFlags:5,Unbreakable:1b,Enchantments:[{id:"minecraft:binding_curse",lvl:1}]}
+          /replaceitem entity @s armor.feet minecraft:leather_boots{display:{color:65280},HideFlags:5,Unbreakable:1b,Enchantments:[{id:"minecraft:binding_curse",lvl:1}]}
+          heal_player();
+          /tp @s -27 77 65 -180 0
+          /spawnpoint @s -27 77 65
+        }
+
+        /gamemode survival @s
+        /function mw:items/bow
+
+      }
+      /gamemode spectator @a[tag=not_playing]
+      /function mw:items/give_random_item
+    }
+
+
+    /execute store result score players_not_in global if entity @a[team=!Red,team=!Green]
+    /execute if score players_not_in global matches 0 run scoreboard players operation timer global < 100 global
+
+    /scoreboard players operation timerd global = timer global
+    /scoreboard players operation timerd global /= 20 global
+    /scoreboard players add timerd global 1
+    /title @a actionbar ["Starting in : ",{"score":{"name":"timerd","objective":"global"},"color":"dark_red"}," seconds"]
+
+    #Countdown timer thingy
+    for (var i = 5; i >= 1; i--)  {
+      /execute if score timer global matches ${i * 20} run $function  {
+        /title @a title {"text":"$i", "color": "dark_red"}
+        /playsound minecraft:block.note_block.hat master @a
+      }
+    }
+  }
+}
+
+#run while game is happening
+/execute if score state global matches 1 run $function 'state1' {
+  #make a function without running it
+  gen function 'end_game' {
+    /scoreboard players set state global 0
+    /gamemode adventure @a
+    /kill @e[type=minecraft:fireball]
+    /tp @a -100 70 0 90 0
+    /clear @a
+    /team empty Red
+    /team empty Green
+    /function mw:reset
+    /scoreboard players set timer global 400
+    /spawnpoint @a -100 70 0
+  }
+
+  function end_any_game()  {
+    /title @a reset
+    /schedule clear mw:items/give_random_item_notice
+    /gamemode spectator @a
+    /schedule function mw:end_game 15s
+  }
+
+  #if red portal breaks
+  /execute unless block -33 69 -72 nether_portal run $function 'end_game/green' {
+    /scoreboard players set state global 2
+    /title @a title ["",{"text":"Green","color":"green"}, " Team Won!"]
+    /setblock -42 79 51 structure_block{mode:"LOAD",posX:0,posY:0,posZ:0, name: "mw:green/pegasus"}
+    /setblock -42 80 51 redstone_block
+    end_any_game();
+  }
+  /execute unless block -24 69 -72 nether_portal run function mw:end_game/green
+
+
+  #if green portal breaks
+  /execute unless block -33 69 72 nether_portal run $function 'end_game/red' {
+    /scoreboard players set state global 2
+    /title @a title ["",{"text":"Red","color":"red"}, " Team Won!"]
+    /setblock -42 79 -66 structure_block{mode:"LOAD",posX:0,posY:0,posZ:0, name: "mw:red/pegasus"}
+    /setblock -42 80 -66 redstone_block
+    end_any_game();
+  }
+  /execute unless block -24 69 72 nether_portal run function mw:end_game/red
+}
+
+
+#player commands stuff
+/execute as @a at @s run $function 'player' {
+
+  #team red
+  /execute if entity @s[team=Red] run $function  {
+    /execute if score @s throw_snowball matches 1.. as @e[type=snowball,distance=..2] run $function  {
+      /tag @s add tick
+      /tag @s add red
+      /scoreboard players set @a[scores={throw_snowball=1..}] throw_snowball 0
+    }
+    /execute positioned ~ 0 ~ if entity @s[distance=..3] run $function  {
+      heal_player();
+      /tp @s -27 77 -65 0 0
+      /tellraw @a ["",{"selector":"@s"}," fell into the void"]
+    }
+  }
+  #team green
+  /execute if entity @s[team=Green] run $function  {
+    /execute if score @s throw_snowball matches 1.. as @e[type=snowball,distance=..2] run $function  {
+      /tag @s add tick
+      /tag @s add green
+      /scoreboard players set @a[scores={throw_snowball=1..}] throw_snowball 0
+    }
+    /execute positioned ~ 0 ~ if entity @s[distance=..3] run $function  {
+      heal_player();
+      /tp @s -27 77 65 -180 0
+      /tellraw @a ["",{"selector":"@s"}," fell into the void"]
+    }
+  }
+}
