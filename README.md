@@ -6,8 +6,8 @@ the only mcfunction files not titled with this are the ones in the items folder 
 
 The files you should read to understand how this works are
 
-mw:tick
+[mw:loop](data/mw/functions/loop.function)
 
-mw:load
+[mw:load](data/mw/functions/load.function)
 
-mw:items/give_random_item
+[mw:items/give_random_item](data/mw/items/give_random_item.function)
