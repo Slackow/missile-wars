@@ -10,4 +10,4 @@ The files you should read to understand how this works are
 
 [mw:load](data/mw/functions/load.function)
 
-[mw:items/give_random_item](data/mw/items/give_random_item.function)
+[mw:items/give_random_item](data/mw/functions/items/give_random_item.function)
